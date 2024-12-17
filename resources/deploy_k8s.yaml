@@ -1,0 +1,52 @@
+---
+- name: Deploy app to Kubernetes
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Set Kubernetes context
+      k8s_context:
+        name: my-cluster
+        kubeconfig: "/path/to/kubeconfig"
+    
+    - name: Create or update deployment
+      k8s:
+        kubeconfig: "/path/to/kubeconfig"
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: my-app-deployment
+          spec:
+            replicas: 3
+            selector:
+              matchLabels:
+                app: my-app
+            template:
+              metadata:
+                labels:
+                  app: my-app
+              spec:
+                containers:
+                  - name: my-app-container
+                    image: "{{ docker_image }}"
+                    ports:
+                      - containerPort: 80
+            
+    - name: Expose service
+      k8s:
+        kubeconfig: "/path/to/kubeconfig"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: my-app-service
+          spec:
+            selector:
+              app: my-app
+            ports:
+              - protocol: TCP
+                port: 80
+                targetPort: 80
+            type: LoadBalancer
